@@ -49,8 +49,8 @@ model_a = SimpleModel().to(device)
 model_b = SimpleModel().to(device)
 
 def load_models():
-    model_a.load_state_dict(torch.load("model_a_weights.pth"))
-    model_b.load_state_dict(torch.load("model_b_weights.pth"))
+    model_a.load_state_dict(torch.load("model_a_weights_2.pth", weights_only=False))
+    model_b.load_state_dict(torch.load("model_b_weights_2.pth", weights_only=False))
 
 def train(n=1):
     # Loss function and optimizer
@@ -103,6 +103,10 @@ def train(n=1):
             # Print loss every few batches
             if i == 1 or (i>0 and i % 100 == 0) :
                 print(f"Epoch {epoch+1}/{n}, Batch {i}, Loss A: {loss_a.item():.4f}, Loss B: {loss_b.item():.4f}")
+
+    # Save the models
+    torch.save(model_a.state_dict(), "model_a_weights_2.pth")
+    torch.save(model_b.state_dict(), "model_b_weights_2.pth")
     # test()
     
 def test():
