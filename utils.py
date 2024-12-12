@@ -28,11 +28,14 @@ def lab_to_rgb(lab_image):
 def imshow(image, asuint8=True):
     if asuint8:
         plt.imshow(image.astype(np.uint8), interpolation='none')
-    else :
+    else:
         plt.imshow(image.astype(np.float32), interpolation='none')
     plt.show()
-    print()
-    for i in range (len(image[0,0,:])):
-        print()
-        print(min(image[:,100,i]))
-        print(max(image[:,100,i]))
+
+    if image.ndim == 3:
+        for i in range(image.shape[2]):
+            print()
+            print(min(image[:, 100, i]))
+            print(max(image[:, 100, i]))
+    else:
+        print("Image does not have a third dimension.")

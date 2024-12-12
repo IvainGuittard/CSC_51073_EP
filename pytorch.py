@@ -1,4 +1,5 @@
 import torch
+import torch_directml
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
@@ -34,15 +35,22 @@ class SimpleModel(nn.Module):
     def forward(self, x):
         return self.model(x)
 
+# Set the device to DirectML for
+device = torch_directml.device()
+
+if device == torch_directml.device():
+    print("Model is on : GPU")
+else:
+    print("Model is on : CPU")
+
 
 # Initialize the models
-model_a = SimpleModel()
-model_b = SimpleModel()
+model_a = SimpleModel().to(device)
+model_b = SimpleModel().to(device)
 
-    
 def load_models():
-    model_a.load_state_dict(torch.load("model_a_weights.pth"))
-    model_b.load_state_dict(torch.load("model_b_weights.pth"))
+    model_a.load_state_dict(torch.load("model_a_weights_2.pth", weights_only=False))
+    model_b.load_state_dict(torch.load("model_b_weights_2.pth", weights_only=False))
 
 def train(n=1):
     # Loss function and optimizer
@@ -51,10 +59,10 @@ def train(n=1):
     optimizer_b = optim.Adam(model_b.parameters(), lr=0.001)
     
     # Convert your data to PyTorch tensors (corrected dtype)
-    entrees_tensor = torch.tensor(entrees, dtype=torch.float32).unsqueeze(1)  # Add channel dimension
-    sorties_a_tensor = torch.tensor(sorties_a, dtype=torch.float32).unsqueeze(1)  # Add channel dimension
-    sorties_b_tensor = torch.tensor(sorties_b, dtype=torch.float32).unsqueeze(1)  # Add channel dimension
-    
+    entrees_tensor = torch.tensor(entrees, dtype=torch.float32).unsqueeze(1).to(device)  # Add channel dimension
+    sorties_a_tensor = torch.tensor(sorties_a, dtype=torch.float32).unsqueeze(1).to(device)  # Add channel dimension
+    sorties_b_tensor = torch.tensor(sorties_b, dtype=torch.float32).unsqueeze(1).to(device)  # Add channel dimension
+
     # Create DataLoader for batches (optional)
     train_data_a = TensorDataset(entrees_tensor, sorties_a_tensor)
     train_data_b = TensorDataset(entrees_tensor, sorties_b_tensor)
@@ -95,6 +103,10 @@ def train(n=1):
             # Print loss every few batches
             if i == 1 or (i>0 and i % 100 == 0) :
                 print(f"Epoch {epoch+1}/{n}, Batch {i}, Loss A: {loss_a.item():.4f}, Loss B: {loss_b.item():.4f}")
+
+    # Save the models
+    torch.save(model_a.state_dict(), "model_a_weights_2.pth")
+    torch.save(model_b.state_dict(), "model_b_weights_2.pth")
     # test()
     
 def test():
@@ -103,11 +115,11 @@ def test():
     model_b.eval()  # Set the model to evaluation mode
     
     # Ensure that the input is converted into a tensor and has the correct shape
-    test_image_bnw_tensor = torch.tensor(np.array([test_image_bnw]), dtype=torch.float32).unsqueeze(1)  # Add channel dimension
-    
+    test_image_bnw_tensor = torch.tensor(np.array([test_image_bnw]), dtype=torch.float32).unsqueeze(1).to(device)  # Add channel dimension
+
     # Predict using the models
-    new_test_image_a = model_a(test_image_bnw_tensor).detach().numpy()[0]  # Get the prediction for model A
-    new_test_image_b = model_b(test_image_bnw_tensor).detach().numpy()[0]  # Get the prediction for model B
+    new_test_image_a = model_a(test_image_bnw_tensor).detach().cpu().numpy()[0]  # Get the prediction for model A
+    new_test_image_b = model_b(test_image_bnw_tensor).detach().cpu().numpy()[0]  # Get the prediction for model B
 
     
     # Remove the channel dimension from model outputs
